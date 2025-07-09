@@ -1,0 +1,47 @@
+🔽 Python Script:
+
+import time, os
+oled = None
+oled_found = os.path.exists("/dev/i2c-1")
+if oled_found:
+    try:
+        import board, busio
+        import adafruit_ssd1306
+        from PIL import Image, ImageDraw, ImageFont
+        i2c = busio.I2C(board.SCL, board.SDA)
+        oled = adafruit_ssd1306.SSD1306_I2C(128, 64, i2c)
+        font = ImageFont.load_default()
+    except:
+        oled_found = False
+
+def get_stats():
+    cpu = os.getloadavg()[0]
+    mem = os.popen("free -m | awk '/Mem/ {print $3\"/\"$2\"MB\"}'").read().strip()
+    swap = os.popen("free -m | awk '/Swap/ {print $3\"/\"$2\"MB\"}'").read().strip()
+    temp = os.popen("vcgencmd measure_temp").read().strip().replace("temp=", "")
+    usb = "Yes" if "sd" in os.popen("lsblk").read() else "No"
+    return cpu, mem, swap, temp, usb
+
+def draw_oled(lines):
+    if not oled_found: return
+    image = Image.new("1", (128, 64))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((0, 0, 128, 64), fill=0)
+    draw.text((0, 0), "ANBU_R3-PI", font=font, fill=255)
+    for i, line in enumerate(lines):
+        draw.text((0, (i + 1) * 10), line, font=font, fill=255)
+    oled.image(image)
+    oled.show()
+
+while True:
+    cpu, mem, swap, temp, usb = get_stats()
+    lines = [
+        f"CPU: {cpu:.2f} Load",
+        f"RAM: {mem}",
+        f"Swap: {swap}",
+        f"Temp: {temp}",
+        f"USB: {usb}",
+    ]
+    print(" | ".join(lines))
+    draw_oled(lines)
+    time.sleep(6)
