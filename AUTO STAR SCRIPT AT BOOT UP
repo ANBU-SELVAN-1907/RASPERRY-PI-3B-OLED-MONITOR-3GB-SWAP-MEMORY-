@@ -1,0 +1,12 @@
+[Unit]
+Description=OLED Monitor Display
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/anbu/oledenv/oled_monitor-final.py
+WorkingDirectory=/home/anbu/oledenv
+Restart=always
+User=anbu
+
+[Install]
+WantedBy=multi-user.target
